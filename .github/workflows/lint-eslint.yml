@@ -26,9 +26,12 @@ jobs:
               with:
                 node-version: 24.16.0
                 registry-url: https://npm.pkg.github.com/
+                scope: "@use-nyte"
                 cache: pnpm
             - name: Lint Code
               run: pnpm dlx @use-nyte/eslint-config@latest
+              env:
+                NODE_AUTH_TOKEN: ${{ secrets.BOT_TOKEN }}
             - name: Commit Changes
               uses: stefanzweifel/git-auto-commit-action@v7.1.0
               with:
