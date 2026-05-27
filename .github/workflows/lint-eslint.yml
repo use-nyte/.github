@@ -1,0 +1,56 @@
+name: ESLint
+
+on:
+    workflow_call:
+
+permissions:
+    contents: write
+
+jobs:
+    lint:
+        name: Create Pull Request with ESLint Changes
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v6
+              with:
+                token: ${{ secrets.BOT_TOKEN }}
+                ref: ${{ github.head_ref }}
+            - name: Checkout use-nyte/eslint-config
+              uses: actions/checkout@v6
+              with:
+                repository: use-nyte/eslint-config
+                token: ${{ secrets.BOT_TOKEN }}
+                path: .eslint-config
+            - name: Setup PNPM
+              uses: pnpm/action-setup@v6
+              with:
+                version: 11.3.0
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                node-version: 24.16.0
+                registry-url: https://npm.pkg.github.com/
+                cache: pnpm
+                cache-dependency-path: .eslint-config/pnpm-lock.yaml
+            - name: Install ESLint Dependencies
+              working-directory: .eslint-config
+              run: pnpm install --frozen-lockfile
+            - name: Lint Code
+              working-directory: .eslint-config
+              run: pnpm eslint ${{ github.workspace }} --fix
+            - name: Remove use-nyte/eslint-config
+              run: rm -rf .eslint-config
+            - name: Commit Changes
+              uses: stefanzweifel/git-auto-commit-action@v7.1.0
+              with:
+                push_options: "--force-with-lease --force-if-includes"
+                commit_message: |
+                  chore: lint code
+                  
+
+                  skip-checks: true
+                commit_user_name: "use-nyte-bot"
+                commit_user_email: ${{ secrets.BOT_EMAIL }}
+                commit_author: "use-nyte-bot <${{ secrets.BOT_EMAIL }}>"
+                
