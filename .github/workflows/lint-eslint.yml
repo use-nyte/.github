@@ -26,7 +26,6 @@ jobs:
                 node-version: 24.16.0
                 registry-url: https://npm.pkg.github.com/
                 cache: pnpm
-                cache-dependency-path: .eslint-config/pnpm-lock.yaml
             - name: Lint Code
               run: pnpm dlx @use-nyte/eslint-config@latest
             - name: Commit Changes
