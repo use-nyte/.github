@@ -1,0 +1,42 @@
+name: Format Code
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+          ref: ${{ github.head_ref }}
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.3.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.16.0
+          registry-url: https://npm.pkg.github.com/
+          cache: pnpm
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Format Code
+        run: |
+          pnpm prettier . --write
+          pnpm prettier . --write --plugin=prettier-plugin-organize-class-members
+      - name: Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v7.1.0
+        with:
+          commit_message: "chore: format code"
+          commit_user_name: "use-nyte-bot"
+          commit_user_email: ${{ secrets.BOT_EMAIL }}
+          commit_author: "use-nyte-bot <${{ secrets.BOT_EMAIL }}>"
