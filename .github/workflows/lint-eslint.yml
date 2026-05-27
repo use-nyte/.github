@@ -38,7 +38,7 @@ jobs:
               run: pnpm install --frozen-lockfile
             - name: Lint Code
               working-directory: .eslint-config
-              run: pnpm eslint ${{ github.workspace }} --fix
+              run: pnpm eslint ${{ github.workspace }} --fix --config ./eslint-config/src/eslint.config.mjs
             - name: Remove use-nyte/eslint-config
               run: rm -rf .eslint-config
             - name: Commit Changes
@@ -53,4 +53,3 @@ jobs:
                 commit_user_name: "use-nyte-bot"
                 commit_user_email: ${{ secrets.BOT_EMAIL }}
                 commit_author: "use-nyte-bot <${{ secrets.BOT_EMAIL }}>"
-                
