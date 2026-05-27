@@ -39,7 +39,7 @@ jobs:
       - name: Format Code
         run: |
           pnpm ./.prettier-config/node_modules/.bin/prettier . --write
-          pnpm ./.prettier-config/node_modules/.bin/prettier . --write --plugin=prettier-plugin-organize-class-members
+          pnpm ./.prettier-config/node_modules/.bin/prettier . --write --plugin=./.prettier-config/node_modules/prettier-plugin-organize-class-members
       - name: Remove use-nyte/prettier-config
         run: rm -rf .prettier-config
       - name: Commit Changes
