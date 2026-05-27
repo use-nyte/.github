@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   format:
-    name: Create a pull request with formatted code
+    name: Create Pull Request with Prettier Changes
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -33,13 +33,14 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           cache: pnpm
           cache-dependency-path: .prettier-config/pnpm-lock.yaml
-      - name: Install Dependencies
+      - name: Install Prettier Dependencies
         working-directory: .prettier-config
         run: pnpm install --frozen-lockfile
       - name: Format Code
+        working-directory: .prettier-config
         run: |
-          pnpm ./.prettier-config/node_modules/.bin/prettier . --write
-          pnpm ./.prettier-config/node_modules/.bin/prettier . --write --plugin=./.prettier-config/node_modules/prettier-plugin-organize-class-members
+          pnpm prettier ${{ github.workspace }} --write
+          pnpm prettier ${{ github.workspace }} --write --no-plugin-search --plugin=prettier-plugin-organize-class-members
       - name: Remove use-nyte/prettier-config
         run: rm -rf .prettier-config
       - name: Commit Changes
