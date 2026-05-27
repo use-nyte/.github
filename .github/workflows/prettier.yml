@@ -40,7 +40,7 @@ jobs:
         working-directory: .prettier-config
         run: |
           pnpm prettier ${{ github.workspace }} --write
-          pnpm prettier ${{ github.workspace }} --write --no-plugin-search --plugin=prettier-plugin-organize-class-members
+          pnpm prettier ${{ github.workspace }} --write --plugin=prettier-plugin-organize-class-members
       - name: Remove use-nyte/prettier-config
         run: rm -rf .prettier-config
       - name: Commit Changes
