@@ -1,0 +1,51 @@
+name: Prettier
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    name: Create a pull request with formatted code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+          ref: ${{ github.head_ref }}
+      - name: Checkout use-nyte/prettier-config
+        uses: actions/checkout@v6
+        with:
+          repository: use-nyte/prettier-config
+          token: ${{ secrets.BOT_TOKEN }}
+          path: .prettier-config
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.3.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.16.0
+          registry-url: https://npm.pkg.github.com/
+          cache: pnpm
+          cache-dependency-path: .prettier-config/pnpm-lock.yaml
+      - name: Install Dependencies
+        working-directory: .prettier-config
+        run: pnpm install --frozen-lockfile
+      - name: Format Code
+        run: |
+          pnpm ./.prettier-config/node_modules/.bin/prettier . --write
+          pnpm ./.prettier-config/node_modules/.bin/prettier . --write --plugin=prettier-plugin-organize-class-members
+      - name: Remove use-nyte/prettier-config
+        run: rm -rf .prettier-config
+      - name: Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v7.1.0
+        with:
+          commit_message: "chore: format code"
+          commit_user_name: "use-nyte-bot"
+          commit_user_email: ${{ secrets.BOT_EMAIL }}
+          commit_author: "use-nyte-bot <${{ secrets.BOT_EMAIL }}>"
