@@ -38,7 +38,7 @@ jobs:
               run: pnpm install --frozen-lockfile
             - name: Lint Code
               working-directory: .eslint-config
-              run: pnpm eslint ${{ github.workspace }} --fix --config ./eslint-config/src/eslint.config.mjs
+              run: pnpm eslint ${{ github.workspace }} --fix --config ./src/eslint.config.mjs
             - name: Remove use-nyte/eslint-config
               run: rm -rf .eslint-config
             - name: Commit Changes
