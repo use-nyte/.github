@@ -40,6 +40,8 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.BOT_TOKEN }}
         if: ${{ steps.release.outputs.release_created }}
       - name: Publish Package
         run: pnpm publish --no-git-checks
