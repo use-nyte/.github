@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  packages: read
 
 jobs:
   format:
@@ -16,12 +17,6 @@ jobs:
         with:
           token: ${{ secrets.BOT_TOKEN }}
           ref: ${{ github.head_ref }}
-      - name: Checkout use-nyte/prettier-config
-        uses: actions/checkout@v6
-        with:
-          repository: use-nyte/prettier-config
-          token: ${{ secrets.BOT_TOKEN }}
-          path: .prettier-config
       - name: Setup PNPM
         uses: pnpm/action-setup@v6
         with:
@@ -31,18 +26,12 @@ jobs:
         with:
           node-version: 24.16.0
           registry-url: https://npm.pkg.github.com/
+          scope: "@use-nyte"
           cache: pnpm
-          cache-dependency-path: .prettier-config/pnpm-lock.yaml
-      - name: Install Prettier Dependencies
-        working-directory: .prettier-config
-        run: pnpm install --frozen-lockfile
       - name: Format Code
-        working-directory: .prettier-config
-        run: |
-          pnpm prettier ${{ github.workspace }} --write
-          pnpm prettier ${{ github.workspace }} --write --plugin=prettier-plugin-organize-class-members
-      - name: Remove use-nyte/prettier-config
-        run: rm -rf .prettier-config
+        run: pnpm dlx @use-nyte/prettier-config@latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.BOT_TOKEN }}
       - name: Commit Changes
         uses: stefanzweifel/git-auto-commit-action@v7.1.0
         with:
