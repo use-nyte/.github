@@ -1,0 +1,29 @@
+name: Task
+description: Track development or maintenance work.
+title: "[Task]: "
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be done?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: What must be true for this task to be complete?
+      placeholder: |
+        - [ ] Requirement one
+        - [ ] Requirement two
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies or Related Issues
+      description: Link relevant issues or pull requests.
