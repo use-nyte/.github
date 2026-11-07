@@ -13,38 +13,81 @@ jobs:
   release:
     name: Release Node.js Package
     runs-on: ubuntu-latest
+
     steps:
       - name: Create Release PR
-        uses: googleapis/release-please-action@v5.0.0
         id: release
+        uses: googleapis/release-please-action@v5.0.0
         with:
           token: ${{ secrets.BOT_TOKEN }}
           release-type: node
+
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        if: steps.release.outputs.release_created == 'true'
+        uses: actions/checkout@v7
         with:
-          token: ${{ secrets.BOT_TOKEN }}
-          ref: ${{ github.head_ref }}
-        if: ${{ steps.release.outputs.release_created }}
-      - name: Setup PNPM
+          persist-credentials: false
+
+      - name: Detect PNPM Version Pin
+        if: steps.release.outputs.release_created == 'true'
+        id: pnpm-pin
+        shell: bash
+        run: |
+          if [ -f package.json ] && jq -e \
+            '(.packageManager // .devEngines.packageManager) != null' \
+            package.json > /dev/null; then
+            echo "pinned=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pinned=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup PNPM from package.json
+        if: steps.release.outputs.release_created == 'true' && steps.pnpm-pin.outputs.pinned == 'true'
+        uses: pnpm/action-setup@v6
+
+      - name: Setup PNPM (Legacy Default)
+        if: steps.release.outputs.release_created == 'true' && steps.pnpm-pin.outputs.pinned != 'true'
         uses: pnpm/action-setup@v6
         with:
           version: 11.3.0
-        if: ${{ steps.release.outputs.release_created }}
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+
+      - name: Detect Node.js Version Pin
+        if: steps.release.outputs.release_created == 'true'
+        id: node-pin
+        shell: bash
+        run: |
+          if [ -s .nvmrc ]; then
+            echo "pinned=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pinned=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js from .nvmrc
+        if: steps.release.outputs.release_created == 'true' && steps.node-pin.outputs.pinned == 'true'
+        uses: actions/setup-node@v7
         with:
-          node-version: 24.16.0
+          node-version-file: .nvmrc
           registry-url: https://npm.pkg.github.com/
+          scope: "@use-nyte"
           cache: pnpm
-        if: ${{ steps.release.outputs.release_created }}
+
+      - name: Setup Node.js (Legacy Default)
+        if: steps.release.outputs.release_created == 'true' && steps.node-pin.outputs.pinned != 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26.13.0
+          registry-url: https://npm.pkg.github.com/
+          scope: "@use-nyte"
+          cache: pnpm
+
       - name: Install Dependencies
+        if: steps.release.outputs.release_created == 'true'
         run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.BOT_TOKEN }}
-        if: ${{ steps.release.outputs.release_created }}
+
       - name: Publish Package
+        if: steps.release.outputs.release_created == 'true'
         run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.BOT_TOKEN }}
-        if: ${{ steps.release.outputs.release_created }}
