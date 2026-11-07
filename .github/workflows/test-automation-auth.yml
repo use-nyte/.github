@@ -1,0 +1,32 @@
+
+name: Test Nyte Automation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-authentication:
+    name: Verify GitHub App Authentication
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate GitHub App Token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.NYTE_AUTOMATION_CLIENT_ID }}
+          private-key: ${{ secrets.NYTE_AUTOMATION_PRIVATE_KEY }}
+          permission-contents: read
+
+      - name: Verify Authentication
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          APP_SLUG: ${{ steps.app.outputs.app-slug }}
+        run: |
+          echo "Authenticated as: ${APP_SLUG}[bot]"
+          echo "Accessible repositories:"
+          gh api /installation/repositories \
+            --jq '.repositories[].full_name'
