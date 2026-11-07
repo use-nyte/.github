@@ -17,7 +17,22 @@ jobs:
               with:
                 token: ${{ secrets.BOT_TOKEN }}
                 ref: ${{ github.head_ref }}
-            - name: Setup PNPM
+            - name: Detect PNPM Version Pin
+              id: pnpm-pin
+              shell: bash
+              run: |
+                if [ -f package.json ] && jq -e \
+                  '(.packageManager // .devEngines.packageManager) != null' \
+                  package.json > /dev/null; then
+                  echo "pinned=true" >> "$GITHUB_OUTPUT"
+                else
+                  echo "pinned=false" >> "$GITHUB_OUTPUT"
+                fi
+            - name: Setup PNPM from package.json
+              if: steps.pnpm-pin.outputs.pinned == 'true'
+              uses: pnpm/action-setup@v6
+            - name: Setup PNPM (Legacy Default)
+              if: steps.pnpm-pin.outputs.pinned != 'true'
               uses: pnpm/action-setup@v6
               with:
                 version: 11.3.0
