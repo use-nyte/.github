@@ -1,0 +1,39 @@
+name: Bug Report
+description: Report a problem with Nyte.
+title: "[Bug]: "
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What is not working?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce the problem?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include relevant versions and platform details.
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or Screenshots
+      description: Remove secrets and personal information.

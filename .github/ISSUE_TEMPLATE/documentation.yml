@@ -1,0 +1,27 @@
+name: Documentation
+description: Report missing, incorrect, or unclear documentation.
+title: "[Docs]: "
+
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Provide the relevant file path or URL.
+      placeholder: docs/getting-started.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Issue or Missing Information
+      description: What needs to be documented or corrected?
+    validations:
+      required: true
+
+  - type: textarea
+    id: changes
+    attributes:
+      label: Suggested Changes
+      description: Describe the expected documentation update.
