@@ -1,0 +1,156 @@
+name: Nyte CI Report
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  report:
+    name: Report CI Results
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Create or Update CI Report
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const run = context.payload.workflow_run;
+            if (!run || run.event !== 'pull_request' || run.name !== 'CI') {
+              core.notice('Not a completed PR CI run. Skipping.');
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            const fullName = `${owner}/${repo}`;
+            const sha = run.head_sha;
+            if (run.repository?.full_name !== fullName || !/^[a-f0-9]{40}$/.test(sha)) {
+              throw new Error('Unexpected workflow-run repository or SHA.');
+            }
+
+            const validPR = (pr) =>
+              pr.state === 'open' &&
+              pr.base.repo.full_name === fullName &&
+              pr.head.sha === sha;
+
+            let candidates = [];
+            try {
+              const { data } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner, repo, commit_sha: sha, per_page: 100,
+              });
+              candidates = data.filter(validPR);
+            } catch (error) {
+              core.warning(`Commit association lookup failed (${error.status ?? 'unknown'}); trying open PRs.`);
+            }
+            if (candidates.length === 0) {
+              const openPRs = await github.paginate(github.rest.pulls.list, {
+                owner, repo, state: 'open', per_page: 100,
+              });
+              candidates = openPRs.filter(validPR);
+            }
+            if (candidates.length !== 1) {
+              core.notice(`Expected one open PR at ${sha.slice(0, 12)}; found ${candidates.length}. Skipping.`);
+              return;
+            }
+            const pr = candidates[0];
+
+            // Do not allow an older completion to replace a newer CI report.
+            const { data: recent } = await github.rest.actions.listWorkflowRuns({
+              owner, repo,
+              workflow_id: run.workflow_id,
+              event: 'pull_request',
+              head_sha: sha,
+              per_page: 100,
+            });
+            const newer = recent.workflow_runs.some((other) =>
+              other.event === 'pull_request' &&
+              other.head_sha === sha &&
+              other.head_branch === run.head_branch &&
+              (other.id > run.id ||
+                (other.id === run.id && other.run_attempt > (run.run_attempt ?? 1)))
+            );
+            if (newer) {
+              core.notice('A newer CI attempt exists for this PR commit. Skipping stale report.');
+              return;
+            }
+
+            // Query metadata only; never download artifacts, logs, caches, or PR source.
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner, repo, run_id: run.id, per_page: 100,
+            });
+            const desired = [
+              'Install dependencies',
+              'Check ESLint',
+              'Check Prettier',
+              'Typecheck',
+              'Run tests',
+              'Build',
+            ];
+            const statusLabel = {
+              success: '✅ Passed', failure: '❌ Failed',
+              cancelled: '⚪ Cancelled', skipped: '— Skipped',
+              timed_out: '❌ Timed out', neutral: '— Neutral',
+            };
+            const stepStatuses = new Map();
+            for (const job of jobs) {
+              for (const step of job.steps ?? []) {
+                if (desired.includes(step.name)) {
+                  stepStatuses.set(step.name, statusLabel[step.conclusion] ?? '⏳ Incomplete');
+                }
+              }
+            }
+            const summary = statusLabel[run.conclusion] ?? `⚠️ ${run.conclusion ?? 'Unknown'}`;
+            const url = `https://github.com/${fullName}/actions/runs/${run.id}`;
+            const rows = desired.map((name) =>
+              `| ${name} | ${stepStatuses.get(name) ?? '— Not run'} |`
+            ).join('\n');
+            const marker = '<!-- nyte-ci-report -->';
+            const body = `${marker}
+            ### Nyte CI Report
+
+            **Overall:** ${summary}  
+            **Commit:** \`${sha.slice(0, 12)}\`  
+            **Run:** [View CI results](${url})
+
+            | Check | Result |
+            | --- | --- |
+            ${rows}
+
+            _This comment is updated after each completed PR CI run. Only the Node CI workflow is summarized._`;
+
+            // Check that the PR still references this commit immediately before writing.
+            const { data: currentPR } = await github.rest.pulls.get({
+              owner, repo, pull_number: pr.number,
+            });
+            if (currentPR.state !== 'open' || currentPR.head.sha !== sha) {
+              core.notice('PR changed or closed before reporting. Skipping stale report.');
+              return;
+            }
+
+            const bot = 'github-actions[bot]';
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: pr.number, per_page: 100,
+            });
+            const existing = comments.find((comment) =>
+              comment.user?.login === bot && comment.body?.startsWith(marker)
+            );
+            if (existing) {
+              if (existing.body !== body) {
+                await github.rest.issues.updateComment({
+                  owner, repo, comment_id: existing.id, body,
+                });
+              }
+              core.info(`Updated CI report on PR #${pr.number}.`);
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: pr.number, body,
+              });
+              core.info(`Created CI report on PR #${pr.number}.`);
+            }
