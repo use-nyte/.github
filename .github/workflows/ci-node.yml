@@ -1,0 +1,77 @@
+name: Node CI
+
+on:
+  workflow_call:
+    inputs:
+      run-build:
+        type: boolean
+        required: false
+        default: true
+      run-tests:
+        type: boolean
+        required: false
+        default: false
+      run-typecheck:
+        type: boolean
+        required: false
+        default: false
+      run-lint:
+        type: boolean
+        required: false
+        default: true
+      run-format:
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  validate:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: https://npm.pkg.github.com/
+          scope: "@use-nyte"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+
+      - name: Check ESLint
+        if: ${{ inputs.run-lint }}
+        run: pnpm lint
+
+      - name: Check Prettier
+        if: ${{ inputs.run-format }}
+        run: pnpm format:check
+
+      - name: Typecheck
+        if: ${{ inputs.run-typecheck }}
+        run: pnpm typecheck
+
+      - name: Run tests
+        if: ${{ inputs.run-tests }}
+        run: pnpm test
+
+      - name: Build
+        if: ${{ inputs.run-build }}
+        run: pnpm build
