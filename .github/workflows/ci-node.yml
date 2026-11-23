@@ -58,20 +58,20 @@ jobs:
 
       - name: Check ESLint
         if: ${{ inputs.run-lint }}
-        run: pnpm lint
+        run: pnpm run lint
 
       - name: Check Prettier
         if: ${{ inputs.run-format }}
-        run: pnpm format:check
+        run: pnpm run format:check
 
       - name: Typecheck
         if: ${{ inputs.run-typecheck }}
-        run: pnpm typecheck
+        run: pnpm run typecheck
 
       - name: Run tests
         if: ${{ inputs.run-tests }}
-        run: pnpm test
+        run: pnpm run test
 
       - name: Build
         if: ${{ inputs.run-build }}
-        run: pnpm build
+        run: pnpm run build
