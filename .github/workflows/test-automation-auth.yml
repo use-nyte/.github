@@ -28,7 +28,10 @@ jobs:
             nyte-web
             eslint-config
             prettier-config
-          permission-contents: read
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+          permission-actions: write
 
       - name: Verify Repository Access
         env:
