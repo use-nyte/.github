@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/use-nyte/.github/compare/v1.0.0...v1.0.1) (2026-11-24)
+
+
+### Bug Fixes
+
+* **templates:** added a space for better user experience ([3663e0d](https://github.com/use-nyte/.github/commit/3663e0da9c57010174c4e3c932b1eace9d4b6959))
+
 ## 1.0.0 (2026-11-23)
 
 
