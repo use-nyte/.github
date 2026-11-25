@@ -23,6 +23,10 @@ on:
         type: boolean
         required: false
         default: true
+      run-docs:
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -75,3 +79,7 @@ jobs:
       - name: Build
         if: ${{ inputs.run-build }}
         run: pnpm run build
+
+      - name: Build Documentation
+        if: ${{ inputs.run-docs }}
+        run: pnpm run docs:build
