@@ -2,92 +2,67 @@ name: Release Node.js Package
 
 on:
   workflow_call:
+    secrets:
+      NYTE_AUTOMATION_PRIVATE_KEY:
+        required: true
 
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+  contents: read
   packages: write
 
 jobs:
   release:
     name: Release Node.js Package
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
-      - name: Create Release PR
+      - name: Generate Nyte Automation token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.NYTE_AUTOMATION_CLIENT_ID }}
+          private-key: ${{ secrets.NYTE_AUTOMATION_PRIVATE_KEY }}
+          owner: use-nyte
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+
+      - name: Run Release Please
         id: release
         uses: googleapis/release-please-action@v5.0.0
         with:
-          token: ${{ secrets.BOT_TOKEN }}
+          token: ${{ steps.app.outputs.token }}
           release-type: node
 
-      - name: Checkout Repository
+      - name: Checkout repository
         if: steps.release.outputs.release_created == 'true'
         uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - name: Detect PNPM Version Pin
+      - name: Setup pnpm
         if: steps.release.outputs.release_created == 'true'
-        id: pnpm-pin
-        shell: bash
-        run: |
-          if [ -f package.json ] && jq -e \
-            '(.packageManager // .devEngines.packageManager) != null' \
-            package.json > /dev/null; then
-            echo "pinned=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "pinned=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Setup PNPM from package.json
-        if: steps.release.outputs.release_created == 'true' && steps.pnpm-pin.outputs.pinned == 'true'
         uses: pnpm/action-setup@v6
 
-      - name: Setup PNPM (Legacy Default)
-        if: steps.release.outputs.release_created == 'true' && steps.pnpm-pin.outputs.pinned != 'true'
-        uses: pnpm/action-setup@v6
-        with:
-          version: 11.3.0
-
-      - name: Detect Node.js Version Pin
+      - name: Setup Node.js
         if: steps.release.outputs.release_created == 'true'
-        id: node-pin
-        shell: bash
-        run: |
-          if [ -s .nvmrc ]; then
-            echo "pinned=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "pinned=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Setup Node.js from .nvmrc
-        if: steps.release.outputs.release_created == 'true' && steps.node-pin.outputs.pinned == 'true'
         uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          cache: pnpm
           registry-url: https://npm.pkg.github.com/
           scope: "@use-nyte"
-          cache: pnpm
 
-      - name: Setup Node.js (Legacy Default)
-        if: steps.release.outputs.release_created == 'true' && steps.node-pin.outputs.pinned != 'true'
-        uses: actions/setup-node@v7
-        with:
-          node-version: 26.13.0
-          registry-url: https://npm.pkg.github.com/
-          scope: "@use-nyte"
-          cache: pnpm
-
-      - name: Install Dependencies
+      - name: Install dependencies
         if: steps.release.outputs.release_created == 'true'
         run: pnpm install --frozen-lockfile
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.BOT_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ github.token }}
 
-      - name: Publish Package
+      - name: Publish package
         if: steps.release.outputs.release_created == 'true'
         run: pnpm publish --no-git-checks
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.BOT_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ github.token }}
