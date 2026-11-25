@@ -1,0 +1,94 @@
+name: Manage Component Releases
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: Repository to manage
+        required: true
+        type: choice
+        options:
+          - nyte-server
+          - nyte-web
+
+      operation:
+        description: Operation to perform
+        required: true
+        type: choice
+        options:
+          - inspect
+          - prepare-pr
+
+      release_as:
+        description: Optional version override (first release is 0.0.1)
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  manage-release:
+    name: Manage Component Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    concurrency:
+      group: component-release-${{ inputs.repository }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Validate release gate
+        if: ${{ inputs.operation == 'prepare-pr' }}
+        env:
+          RELEASES_ENABLED: ${{ vars.NYTE_RELEASES_ENABLED }}
+        run: |
+          if [[ "$RELEASES_ENABLED" != "true" ]]; then
+            echo "::error::Release preparation is disabled until baseline validation."
+            exit 1
+          fi
+
+      - name: Generate GitHub App token
+        id: app
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.NYTE_AUTOMATION_CLIENT_ID }}
+          private-key: ${{ secrets.NYTE_AUTOMATION_PRIVATE_KEY }}
+          owner: use-nyte
+          repositories: ${{ inputs.repository }}
+          permission-contents: ${{ inputs.operation == 'prepare-pr' && 'write' || 'read' }}
+          permission-pull-requests: ${{ inputs.operation == 'prepare-pr' && 'write' || 'read' }}
+          permission-issues: ${{ inputs.operation == 'prepare-pr' && 'write' || 'read' }}
+
+      - name: Inspect repository
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          TARGET_REPO: use-nyte/${{ inputs.repository }}
+        run: |
+          set -euo pipefail
+
+          echo "Repository: $TARGET_REPO"
+
+          gh api "repos/$TARGET_REPO" \
+            --jq '"Default branch: " + .default_branch'
+
+          version="$(
+            gh api "repos/$TARGET_REPO/contents/package.json" \
+              --jq '.content' |
+              base64 --decode |
+              node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version"
+          )"
+
+          echo "Current package version: $version"
+
+      - name: Prepare release pull request
+        if: ${{ inputs.operation == 'prepare-pr' }}
+        uses: googleapis/release-please-action@v5.0.0
+        with:
+          token: ${{ steps.app.outputs.token }}
+          repo-url: use-nyte/${{ inputs.repository }}
+          target-branch: main
+          release-type: node
+          release-as: ${{ inputs.release_as }}
+          skip-github-release: true
