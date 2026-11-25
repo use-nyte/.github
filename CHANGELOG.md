@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/use-nyte/.github/compare/v1.0.1...v1.1.0) (2026-11-25)
+
+
+### Features
+
+* **ci:** centralize component release preparation ([e4a6bbd](https://github.com/use-nyte/.github/commit/e4a6bbd5969a486f58d32cca321baf7098a9a24b))
+* **ci:** support optional documentation builds in node CI ([7d7cac0](https://github.com/use-nyte/.github/commit/7d7cac0858768987bcd4784f5546cf533eb39262))
+
 ## [1.0.1](https://github.com/use-nyte/.github/compare/v1.0.0...v1.0.1) (2026-11-24)
 
 
