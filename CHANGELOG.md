@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/use-nyte/.github/compare/v1.1.0...v1.1.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **ci:** recognize Nyte Automation release pull requests ([a9f0d20](https://github.com/use-nyte/.github/commit/a9f0d207ffdaec7e0282e7ebdf46ea1f31f8d74e))
+
 ## [1.1.0](https://github.com/use-nyte/.github/compare/v1.0.1...v1.1.0) (2026-11-25)
 
 
