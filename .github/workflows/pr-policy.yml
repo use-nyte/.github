@@ -85,7 +85,7 @@ jobs:
 
           # Only bypass issue validation for verified Release Please PRs.
           trusted_release = (
-              pr.get("user", {}).get("id") == 281729270
+              pr.get("user", {}).get("id") == 353687181
               and pr["head"]["repo"]["full_name"] == base_repo
               and pr["head"]["ref"].startswith(
                   "release-please--branches--main--components--"
