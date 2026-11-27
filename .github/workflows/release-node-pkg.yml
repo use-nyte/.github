@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Generate Nyte Automation token
         id: app
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@v3.4.0
         with:
           client-id: ${{ vars.NYTE_AUTOMATION_CLIENT_ID }}
           private-key: ${{ secrets.NYTE_AUTOMATION_PRIVATE_KEY }}
@@ -38,17 +38,17 @@ jobs:
 
       - name: Checkout repository
         if: steps.release.outputs.release_created == 'true'
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup pnpm
         if: steps.release.outputs.release_created == 'true'
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@v6.1.1
 
       - name: Setup Node.js
         if: steps.release.outputs.release_created == 'true'
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v7.1.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
