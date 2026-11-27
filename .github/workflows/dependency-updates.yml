@@ -1,0 +1,50 @@
+name: Dependency Updates
+
+on:
+  schedule:
+    - cron: "23 9 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Preview updates without creating branches or pull requests
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: nyte-dependency-updates
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Generate Nyte Automation token
+        id: app
+        uses: actions/create-github-app-token@v3.4.0
+        with:
+          client-id: ${{ vars.NYTE_AUTOMATION_CLIENT_ID }}
+          private-key: ${{ secrets.NYTE_AUTOMATION_PRIVATE_KEY }}
+          owner: use-nyte
+          repositories: .github, docs, eslint-config, prettier-config, nyte, nyte-server, nyte-ui, nyte-web
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      - name: Check dependency updates
+        uses: renovatebot/github-action@v48.0.0
+        with:
+          configurationFile: .github/renovate-config.cjs
+          token: ${{ steps.app.outputs.token }}
+        env:
+          RENOVATE_PACKAGE_REGISTRY_TOKEN: ${{ github.token }}
+          RENOVATE_DRY_RUN: ${{ inputs.dry_run && 'full' || '' }}

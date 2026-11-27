@@ -83,7 +83,7 @@ jobs:
           base_repo = pr["base"]["repo"]["full_name"]
           base_owner, base_name = base_repo.split("/", 1)
 
-          # Only bypass issue validation for verified Release Please PRs.
+          # Check the Nyte Automation identity before exempting maintenance PRs.
           trusted_release = (
               pr.get("user", {}).get("id") == 353687181
               and pr["head"]["repo"]["full_name"] == base_repo
@@ -93,8 +93,15 @@ jobs:
               and pr["title"].startswith("chore(main): release ")
           )
 
-          if trusted_release:
-              print("Trusted Release Please PR; skipping issue validation.")
+          trusted_dependency_update = (
+              pr.get("user", {}).get("id") == 353687181
+              and pr["head"]["repo"]["full_name"] == base_repo
+              and pr["head"]["ref"].startswith("renovate/")
+              and pr["title"].startswith("chore(deps): ")
+          )
+
+          if trusted_release or trusted_dependency_update:
+              print("Trusted Nyte Automation PR; skipping issue validation.")
               sys.exit(0)
 
           # Remove template comments before searching for references.
