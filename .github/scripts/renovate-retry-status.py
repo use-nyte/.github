@@ -68,7 +68,7 @@ def main(phase):
         outcome = os.environ["RENOVATE_OUTCOME"]
         conclusion = "Finished" if outcome == "success" else f"Ended with status `{outcome}`"
         status = status_block(f"**Latest Renovate retry** — {conclusion}. {result} [View run]({run_url}).")
-        checkbox = re.sub(r"\[[xX]\]", "[ ]", control.group(), count=1) if control else DEFAULT_CONTROL
+        checkbox = control.group() if control else DEFAULT_CONTROL
         replacement = f"{checkbox}\n\n{status}\n"
         updated = (
             body[:control.start()] + replacement + body[control.end():]
