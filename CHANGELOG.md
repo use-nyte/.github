@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/use-nyte/.github/compare/v1.1.2...v1.2.0) (2026-11-28)
+
+
+### Features
+
+* **actions:** allow repos to dispatch automations ([3bdfa4a](https://github.com/use-nyte/.github/commit/3bdfa4a702a18b3f077b7b69a7dbf1758a5602f0))
+
+
+### Bug Fixes
+
+* **ci:** ignore unexpected key from actionlint that github supports ([3fc04d1](https://github.com/use-nyte/.github/commit/3fc04d11bc39e653fefdbb6aa7cb67b4289a5229))
+
 ## [1.1.2](https://github.com/use-nyte/.github/compare/v1.1.1...v1.1.2) (2026-11-28)
 
 
