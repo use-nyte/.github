@@ -17,6 +17,7 @@ if (refreshOnly && !repositories.includes(targetRepository)) {
 
 module.exports = {
   platform: "github",
+  extends: ["mergeConfidence:all-badges"],
   repositories: refreshOnly ? [targetRepository] : repositories,
   mode: refreshOnly ? "silent" : "full",
   onboarding: false,
@@ -27,6 +28,8 @@ module.exports = {
   semanticCommits: "enabled",
   semanticCommitType: "chore",
   semanticCommitScope: "deps",
+  prBodyTemplate:
+    "{{{header}}}{{{table}}}{{{warnings}}}{{{controls}}}{{{notes}}}{{{changelogs}}}{{{configDescription}}}{{{footer}}}",
   prCreation: "immediate",
   prHourlyLimit: 0,
   rebaseWhen: "conflicted",
