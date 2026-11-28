@@ -53,15 +53,6 @@ module.exports = {
     },
     { matchManagers: ["github-actions"], pinDigests: false },
     {
-      matchRepositories: ["use-nyte/.github"],
-      matchManagers: ["github-actions"],
-      matchFileNames: [".github/workflows/dependency-updates.yml"],
-      matchDepNames: ["node"],
-      overrideDatasource: "node-version",
-      ignoreUnstable: true,
-      allowedVersions: "/^v?26\\./"
-    },
-    {
       matchRepositories: ["use-nyte/nyte"],
       matchManagers: ["dockerfile"],
       matchDatasources: ["docker"],
@@ -70,15 +61,6 @@ module.exports = {
     }
   ],
   customManagers: [
-    {
-      customType: "regex",
-      managerFilePatterns: ["/^\\.github/workflows/dependency-updates\\.yml$/"],
-      matchStrings: [
-        "--package=(?<depName>renovate)@(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\\s+-- renovate\\b",
-        "npm install --global --prefer-offline (?<depName>corepack)@(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
-      ],
-      datasourceTemplate: "npm"
-    },
     {
       customType: "regex",
       managerFilePatterns: ["/(^|/)Dockerfile$/"],
