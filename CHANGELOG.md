@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/use-nyte/.github/compare/v1.1.1...v1.1.2) (2026-11-28)
+
+
+### Bug Fixes
+
+* **templates:** update pull requests and issue templates for easier completion ([016453d](https://github.com/use-nyte/.github/commit/016453df22ce51d20ef6b265ba244c5da1603170))
+
 ## [1.1.1](https://github.com/use-nyte/.github/compare/v1.1.0...v1.1.1) (2026-11-25)
 
 
