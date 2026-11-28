@@ -23,7 +23,6 @@ jobs:
           EVENT_TYPE: ${{ inputs.event }}
         run: |
           case "$EVENT_TYPE" in
-            refresh-dependency-prs) repository=.github ;;
             component-main-updated) repository=nyte ;;
             *) echo "::error::Unsupported Nyte dispatch event"; exit 1 ;;
           esac

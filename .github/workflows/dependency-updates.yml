@@ -1,10 +1,8 @@
 name: Dependency Updates
 
 on:
-  push:
-    branches: [main]
   repository_dispatch:
-    types: [refresh-dependency-prs, rebase-dependency-pr]
+    types: [rebase-dependency-pr]
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
@@ -87,8 +85,8 @@ jobs:
           renovate-version: "45.3.2"
         env:
           RENOVATE_PACKAGE_REGISTRY_TOKEN: ${{ github.token }}
-          RENOVATE_REFRESH_ONLY: ${{ github.event_name == 'push' || github.event_name == 'repository_dispatch' }}
-          RENOVATE_TARGET_REPOSITORY: ${{ github.event_name == 'push' && github.repository || github.event.client_payload.repository }}
+          RENOVATE_REFRESH_ONLY: ${{ github.event_name == 'repository_dispatch' }}
+          RENOVATE_TARGET_REPOSITORY: ${{ github.event.client_payload.repository }}
           RENOVATE_DRY_RUN: ${{ inputs.dry_run && 'full' || '' }}
 
 
