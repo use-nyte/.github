@@ -1,0 +1,71 @@
+name: Request a Dependency Rebase
+
+on:
+  workflow_call:
+    secrets:
+      NYTE_AUTOMATION_PRIVATE_KEY:
+        required: true
+
+permissions: {}
+
+jobs:
+  request:
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.action == 'edited' &&
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.user.id == 353687181 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.sender.type == 'User'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Read the event payload without checking out or running PR code.
+      - name: Detect a new rebase request
+        id: checkbox
+        run: |
+          python3 - <<'PYTHON'
+          import json
+          import os
+          import re
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as file:
+              event = json.load(file)
+
+          before = event.get("changes", {}).get("body", {}).get("from") or ""
+          after = event["pull_request"].get("body") or ""
+          prefix = r"(?m)^ *- +"
+          marker = r" +<!-- rebase-check -->"
+          unchecked = re.compile(prefix + r"\[ \]" + marker)
+          checked = re.compile(prefix + r"\[[xX]\]" + marker)
+          if unchecked.search(before) and checked.search(after) and not checked.search(before):
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+                  output.write("requested=true\n")
+          PYTHON
+
+      - name: Generate Nyte Automation token
+        if: steps.checkbox.outputs.requested == 'true'
+        id: app
+        uses: actions/create-github-app-token@v3.4.0
+        with:
+          client-id: ${{ vars.NYTE_AUTOMATION_CLIENT_ID }}
+          private-key: ${{ secrets.NYTE_AUTOMATION_PRIVATE_KEY }}
+          owner: use-nyte
+          repositories: ${{ github.event.repository.name == '.github' && '.github' || format('.github,{0}', github.event.repository.name) }}
+          permission-contents: write
+
+      - name: Authorize and dispatch the request
+        if: steps.checkbox.outputs.requested == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REQUESTER: ${{ github.event.sender.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          permission="$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$REQUESTER/permission" --jq .permission)"
+          case "$permission" in
+            admin|maintain|write) ;;
+            *) echo "The requester needs write access to request a rebase."; exit 0 ;;
+          esac
+          jq -n --arg repo "$GITHUB_REPOSITORY" --argjson pr "$PR_NUMBER" \
+            '{event_type: "rebase-dependency-pr", client_payload: {repository: $repo, pull_request: $pr}}' |
+            gh api --method POST repos/use-nyte/.github/dispatches --input -

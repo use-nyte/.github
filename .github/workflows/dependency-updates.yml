@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   repository_dispatch:
-    types: [refresh-dependency-prs]
+    types: [refresh-dependency-prs, rebase-dependency-pr]
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
@@ -46,7 +46,40 @@ jobs:
           permission-vulnerability-alerts: read
           permission-statuses: write
 
+      - name: Update the existing artifact comment
+        if: github.event.action == 'rebase-dependency-pr'
+        id: rebase
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          TARGET_REPO: ${{ github.event.client_payload.repository }}
+          PR_NUMBER: ${{ github.event.client_payload.pull_request }}
+        run: |
+          [[ "$TARGET_REPO" =~ ^use-nyte/[a-zA-Z0-9._-]+$ && "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]
+          pr="$(gh api "repos/$TARGET_REPO/pulls/$PR_NUMBER")"
+          if ! jq -e --arg repo "$TARGET_REPO" '
+            .state == "open" and .user.id == 353687181 and
+            .head.repo.full_name == $repo and .base.ref == "main" and
+            ((.body // "") | test("(?m)^ *- +\\[[xX]\\] +<!-- rebase-check -->"))
+          ' <<< "$pr" >/dev/null; then
+            echo "The PR is no longer marked for retry."
+            exit 0
+          fi
+          echo "requested=true" >> "$GITHUB_OUTPUT"
+
+          comment="$(gh api --paginate --slurp "repos/$TARGET_REPO/issues/$PR_NUMBER/comments" |
+            jq -c '[.[][] | select(.user.id == 353687181 and (.body | startswith("### ⚠️ Artifact update problem")))] | last // empty')"
+          if [[ -n "$comment" ]]; then
+            id="$(jq -r .id <<< "$comment")"
+            jq '{body: (.body | gsub("<!-- nyte-rebase-status -->[^\n]*\n\n"; "") |
+              sub("\n\n"; "\n\n<!-- nyte-rebase-status --> 🔄 Retrying the rebase and lockfile update.\n\n"))}' <<< "$comment" |
+              gh api --method PATCH "repos/$TARGET_REPO/issues/comments/$id" --input - >/dev/null
+            echo "comment-id=$id" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Check dependency updates
+        if: github.event.action != 'rebase-dependency-pr' || steps.rebase.outputs.requested == 'true'
+        id: renovate
         uses: renovatebot/github-action@v48.0.0
         with:
           configurationFile: .github/renovate-config.cjs
@@ -57,3 +90,20 @@ jobs:
           RENOVATE_REFRESH_ONLY: ${{ github.event_name == 'push' || github.event_name == 'repository_dispatch' }}
           RENOVATE_TARGET_REPOSITORY: ${{ github.event_name == 'push' && github.repository || github.event.client_payload.repository }}
           RENOVATE_DRY_RUN: ${{ inputs.dry_run && 'full' || '' }}
+
+
+      - name: Clear the running status if the artifact comment remains
+        if: always() && steps.rebase.outputs.comment-id != ''
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          TARGET_REPO: ${{ github.event.client_payload.repository }}
+          COMMENT_ID: ${{ steps.rebase.outputs.comment-id }}
+          PR_NUMBER: ${{ github.event.client_payload.pull_request }}
+        run: |
+          # Renovate may delete the warning on success or replace it with new details.
+          comment="$(gh api --paginate --slurp "repos/$TARGET_REPO/issues/$PR_NUMBER/comments" |
+            jq -c --arg id "$COMMENT_ID" '[.[][] | select((.id | tostring) == $id and .user.id == 353687181)] | first // empty')"
+          if [[ -n "$comment" ]] && jq -e '.body | contains("<!-- nyte-rebase-status -->")' <<< "$comment" >/dev/null; then
+            jq '{body: (.body | sub("<!-- nyte-rebase-status -->[^\n]*"; "<!-- nyte-rebase-status --> Retry finished. This artifact warning still needs attention."))}' <<< "$comment" |
+              gh api --method PATCH "repos/$TARGET_REPO/issues/comments/$COMMENT_ID" --input - >/dev/null
+          fi

@@ -1,0 +1,14 @@
+name: Refresh Dependency PRs
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [edited]
+
+permissions: {}
+
+jobs:
+  request-rebase:
+    uses: ./.github/workflows/request-dependency-rebase.yml
+    secrets:
+      NYTE_AUTOMATION_PRIVATE_KEY: ${{ secrets.NYTE_AUTOMATION_PRIVATE_KEY }}
