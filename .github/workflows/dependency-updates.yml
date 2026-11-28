@@ -39,6 +39,11 @@ jobs:
           cache: npm
           cache-dependency-path: .github/workflows/dependency-updates.yml
 
+      - name: Enable pnpm through Corepack
+        run: |
+          npm install --global --prefer-offline corepack@0.36.0
+          corepack enable pnpm
+
       - name: Generate Nyte Automation token
         id: app
         uses: actions/create-github-app-token@v3.4.0
@@ -57,6 +62,7 @@ jobs:
         run: npm exec --yes --prefer-offline --package=renovate@45.3.2 -- renovate
         env:
           RENOVATE_CONFIG_FILE: .github/renovate-config.cjs
+          RENOVATE_BINARY_SOURCE: global
           RENOVATE_TOKEN: ${{ steps.app.outputs.token }}
           RENOVATE_PACKAGE_REGISTRY_TOKEN: ${{ github.token }}
           RENOVATE_REFRESH_ONLY: ${{ github.event_name == 'push' || github.event_name == 'repository_dispatch' }}

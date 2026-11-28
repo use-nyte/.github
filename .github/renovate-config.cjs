@@ -73,8 +73,10 @@ module.exports = {
     {
       customType: "regex",
       managerFilePatterns: ["/^\\.github/workflows/dependency-updates\\.yml$/"],
-      matchStrings: ["--package=renovate@(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\\s+-- renovate\\b"],
-      depNameTemplate: "renovate",
+      matchStrings: [
+        "--package=(?<depName>renovate)@(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\\s+-- renovate\\b",
+        "npm install --global --prefer-offline (?<depName>corepack)@(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
       datasourceTemplate: "npm"
     },
     {
