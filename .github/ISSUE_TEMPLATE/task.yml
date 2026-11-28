@@ -15,10 +15,8 @@ body:
     id: acceptance
     attributes:
       label: Acceptance Criteria
-      description: What must be true for this task to be complete?
-      placeholder: |
-        - [ ] Requirement one
-        - [ ] Requirement two
+      description: Describe the expected outcome in plain text or bullets.
+      placeholder: The expected outcome is…
     validations:
       required: true
 

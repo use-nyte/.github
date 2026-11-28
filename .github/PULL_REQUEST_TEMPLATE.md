@@ -1,38 +1,11 @@
-## Description
+## Summary
 
-<!-- Briefly describe what this pull request changes and why. -->
+<!-- What changed and why? If users need to take any action after upgrading, mention it here. -->
 
 ## Related Issues
 
-<!-- Reference an existing issue, e.g. Fixes #123 or Refs use-nyte/nyte-server#123. -->
+<!-- Use Closes #123 to close the issue on merge, or Refs #123 to keep it open. For another Nyte repo, use Closes use-nyte/nyte-server#123. -->
 
-## Changes
+## Testing
 
-<!-- Summarize the main changes. -->
-
-- 
-
-## Validation
-
-<!-- Describe how the changes were tested. -->
-
-- [ ] Relevant tests pass
-- [ ] ESLint and Prettier checks pass
-- [ ] Documentation has been updated, if applicable
-
-## Compatibility
-
-<!-- Note any compatibility concerns or required migrations. -->
-
-- [ ] Existing functionality remains compatible
-- [ ] Breaking changes are documented, if applicable
-
-## Breaking Changes
-
-<!-- Describe any breaking changes and migration steps, or write "None". -->
-
-None
-
-## Additional Notes
-
-<!-- Include screenshots, references, or anything reviewers should know. -->
+<!-- What did you run or check? Include anything you could not verify. -->
