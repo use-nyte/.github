@@ -32,6 +32,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up Node.js and npm cache
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "26.13.1"
+          cache: npm
+          cache-dependency-path: .github/workflows/dependency-updates.yml
+
       - name: Generate Nyte Automation token
         id: app
         uses: actions/create-github-app-token@v3.4.0
@@ -47,11 +54,10 @@ jobs:
           permission-statuses: write
 
       - name: Check dependency updates
-        uses: renovatebot/github-action@v48.0.0
-        with:
-          configurationFile: .github/renovate-config.cjs
-          token: ${{ steps.app.outputs.token }}
+        run: npm exec --yes --prefer-offline --package=renovate@45.3.2 -- renovate
         env:
+          RENOVATE_CONFIG_FILE: .github/renovate-config.cjs
+          RENOVATE_TOKEN: ${{ steps.app.outputs.token }}
           RENOVATE_PACKAGE_REGISTRY_TOKEN: ${{ github.token }}
           RENOVATE_REFRESH_ONLY: ${{ github.event_name == 'push' || github.event_name == 'repository_dispatch' }}
           RENOVATE_TARGET_REPOSITORY: ${{ github.event_name == 'push' && github.repository || github.event.client_payload.repository }}
