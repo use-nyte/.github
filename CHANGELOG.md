@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/use-nyte/.github/compare/v1.2.0...v1.3.0) (2026-11-28)
+
+
+### Features
+
+* **ci:** rebase a pull request when the checkbox is clicked ([dbdafe7](https://github.com/use-nyte/.github/commit/dbdafe7395b2cf97d2cdc6ab57216d7ac25b35cb))
+
 ## [1.2.0](https://github.com/use-nyte/.github/compare/v1.1.2...v1.2.0) (2026-11-28)
 
 
