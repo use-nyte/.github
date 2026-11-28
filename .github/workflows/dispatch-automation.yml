@@ -1,0 +1,50 @@
+name: Dispatch Nyte Automation
+
+on:
+  workflow_call:
+    inputs:
+      event:
+        type: string
+        required: true
+    secrets:
+      NYTE_AUTOMATION_PRIVATE_KEY:
+        required: true
+
+permissions: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Select dispatch destination
+        id: target
+        env:
+          EVENT_TYPE: ${{ inputs.event }}
+        run: |
+          case "$EVENT_TYPE" in
+            refresh-dependency-prs) repository=.github ;;
+            component-main-updated) repository=nyte ;;
+            *) echo "::error::Unsupported Nyte dispatch event"; exit 1 ;;
+          esac
+          echo "repository=$repository" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Nyte Automation token
+        id: app
+        uses: actions/create-github-app-token@v3.4.0
+        with:
+          client-id: ${{ vars.NYTE_AUTOMATION_CLIENT_ID }}
+          private-key: ${{ secrets.NYTE_AUTOMATION_PRIVATE_KEY }}
+          owner: use-nyte
+          repositories: ${{ steps.target.outputs.repository }}
+          permission-contents: write
+
+      - name: Dispatch event
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          EVENT_TYPE: ${{ inputs.event }}
+          TARGET_REPO: ${{ steps.target.outputs.repository }}
+        run: |
+          jq -n --arg event "$EVENT_TYPE" --arg repo "$GITHUB_REPOSITORY" \
+            '{event_type: $event, client_payload: {repository: $repo}}' |
+            gh api --method POST "repos/use-nyte/$TARGET_REPO/dispatches" --input -
