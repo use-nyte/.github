@@ -35,6 +35,11 @@ module.exports = {
       minimumReleaseAge: "1 day",
       internalChecksFilter: "strict"
     },
+    {
+      matchManagers: ["npm"],
+      matchDepTypes: ["dependencies", "devDependencies", "optionalDependencies"],
+      rangeStrategy: "bump"
+    },
     { matchManagers: ["github-actions"], pinDigests: false },
     {
       matchRepositories: ["use-nyte/nyte"],
