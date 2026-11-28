@@ -29,6 +29,12 @@ module.exports = {
   packageRules: [
     { matchDatasources: ["node-version"], groupName: "Node.js" },
     { matchPackageNames: ["pnpm"], groupName: "pnpm" },
+    {
+      matchDatasources: ["npm"],
+      matchPackageNames: ["!@use-nyte/**"],
+      minimumReleaseAge: "1 day",
+      internalChecksFilter: "strict"
+    },
     { matchManagers: ["github-actions"], pinDigests: false },
     {
       matchRepositories: ["use-nyte/nyte"],

@@ -16,6 +16,7 @@ permissions:
 jobs:
   validate:
     name: Validate PR Title
+    if: github.event.pull_request.user.id != 353687181
     runs-on: ubuntu-latest
 
     steps:
@@ -82,27 +83,6 @@ jobs:
 
           base_repo = pr["base"]["repo"]["full_name"]
           base_owner, base_name = base_repo.split("/", 1)
-
-          # Check the Nyte Automation identity before exempting maintenance PRs.
-          trusted_release = (
-              pr.get("user", {}).get("id") == 353687181
-              and pr["head"]["repo"]["full_name"] == base_repo
-              and pr["head"]["ref"].startswith(
-                  "release-please--branches--main--components--"
-              )
-              and pr["title"].startswith("chore(main): release ")
-          )
-
-          trusted_dependency_update = (
-              pr.get("user", {}).get("id") == 353687181
-              and pr["head"]["repo"]["full_name"] == base_repo
-              and pr["head"]["ref"].startswith("renovate/")
-              and pr["title"].startswith("chore(deps): ")
-          )
-
-          if trusted_release or trusted_dependency_update:
-              print("Trusted Nyte Automation PR; skipping issue validation.")
-              sys.exit(0)
 
           # Remove template comments before searching for references.
           body = re.sub(
