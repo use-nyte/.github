@@ -20,6 +20,7 @@ module.exports = {
   semanticCommitScope: "deps",
   prCreation: "immediate",
   prHourlyLimit: 0,
+  rebaseWhen: "behind-base-branch",
   hostRules: [
     {
       hostType: "npm",
