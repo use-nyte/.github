@@ -39,6 +39,8 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
           permission-workflows: write
+          permission-vulnerability-alerts: read
+          permission-statuses: write
 
       - name: Check dependency updates
         uses: renovatebot/github-action@v48.0.0
