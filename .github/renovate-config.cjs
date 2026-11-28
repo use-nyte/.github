@@ -19,6 +19,7 @@ module.exports = {
   semanticCommitType: "chore",
   semanticCommitScope: "deps",
   prCreation: "immediate",
+  prHourlyLimit: 0,
   hostRules: [
     {
       hostType: "npm",
